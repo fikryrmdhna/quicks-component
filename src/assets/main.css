@@ -2,48 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Color Palette and Semantic Colors */
-:root {
-  --color-white: #ffffff;
-  --color-white-soft: #f8f8f8;
-  --color-white-mute: #f2f2f2;
-  
-  --color-black: #181818;
-  --color-black-soft: #222222;
-  --color-black-mute: #282828;
-  
-  --color-indigo: #2c3e50;
-  --color-green: hsla(160, 100%, 37%, 1);
-  --color-green-hover: hsla(160, 100%, 37%, 0.2);
-  
-  /* Semantic Colors - Light Mode */
-  --color-background: var(--color-white);
-  --color-background-soft: var(--color-white-soft);
-  --color-background-mute: var(--color-white-mute);
-  
-  --color-border: rgba(60, 60, 60, 0.12);
-  --color-border-hover: rgba(60, 60, 60, 0.29);
-  
-  --color-heading: var(--color-indigo);
-  --color-text: var(--color-indigo);
-  --color-text-secondary: rgba(60, 60, 60, 0.66);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --color-background: var(--color-black);
-    --color-background-soft: var(--color-black-soft);
-    --color-background-mute: var(--color-black-mute);
-    
-    --color-border: rgba(84, 84, 84, 0.48);
-    --color-border-hover: rgba(84, 84, 84, 0.65);
-    
-    --color-heading: var(--color-white);
-    --color-text: var(--color-white);
-    --color-text-secondary: rgba(235, 235, 235, 0.64);
-  }
-}
-
 /* Base Styles */
 * {
   box-sizing: border-box;
@@ -53,8 +11,6 @@
 
 body {
   min-height: 100vh;
-  color: var(--color-text);
-  background: var(--color-background);
   transition: color 0.5s, background-color 0.5s;
   line-height: 1.6;
   font-family: 
