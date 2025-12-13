@@ -2,6 +2,14 @@
 import { onMounted } from 'vue'
 import { useConversations } from '@/composables/useConversations'
 import FloatingButton from '@/components/FloatingButton.vue'
+import ButtonNormal from '@/components/button/ButtonNormal.vue'
+import ButtonQuick from '@/components/button/ButtonQuick.vue'
+import ButtonQuickTask from '@/components/button/ButtonQuickTask.vue'
+import ButtonQuickInbox from '@/components/button/ButtonQuickInbox.vue'
+import TextInput from '@/components/form/TextInput.vue'
+import SearchInput from '@/components/form/SearchInput.vue'
+import SingleUser from '@/components/user/SingleUser.vue'
+import MultipleUser from '@/components/user/MultipleUser.vue'
 
 const { conversations, loading, error, fetchConversations } = useConversations()
 
@@ -12,6 +20,15 @@ onMounted(() => {
 
 <template>
   <div class="p-8 max-w-7xl mx-auto">
+    <!-- <ButtonNormal class="mx-2">Send</ButtonNormal>
+    <ButtonNormal class="mx-2">New Task</ButtonNormal>
+    <ButtonQuick />
+    <ButtonQuickTask />
+    <ButtonQuickInbox />
+    <TextInput />
+    <SearchInput />
+    <SingleUser>F</SingleUser>
+    <MultipleUser /> -->
     <h1 class="mb-8 text-[var(--color-heading)]">Conversations</h1>
 
     <!-- Loading State -->
