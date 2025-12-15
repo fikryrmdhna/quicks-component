@@ -1,67 +1,20 @@
 <script setup lang="ts">
-import { onMounted } from 'vue'
-import { useConversations } from '@/composables/useConversations'
 import FloatingButton from '@/components/FloatingButton.vue'
-import ButtonNormal from '@/components/button/ButtonNormal.vue'
-import ButtonQuick from '@/components/button/ButtonQuick.vue'
-import ButtonQuickTask from '@/components/button/ButtonQuickTask.vue'
-import ButtonQuickInbox from '@/components/button/ButtonQuickInbox.vue'
-import TextInput from '@/components/form/TextInput.vue'
-import SearchInput from '@/components/form/SearchInput.vue'
-import SingleUser from '@/components/user/SingleUser.vue'
-import MultipleUser from '@/components/user/MultipleUser.vue'
-
-const { conversations, loading, error, fetchConversations } = useConversations()
-
-onMounted(() => {
-  fetchConversations()
-})
 </script>
 
 <template>
-  <div class="p-8 max-w-7xl mx-auto">
-    <!-- <ButtonNormal class="mx-2">Send</ButtonNormal>
-    <ButtonNormal class="mx-2">New Task</ButtonNormal>
-    <ButtonQuick />
-    <ButtonQuickTask />
-    <ButtonQuickInbox />
-    <TextInput />
-    <SearchInput />
-    <SingleUser>F</SingleUser>
-    <MultipleUser /> -->
-    <h1 class="mb-8 text-[var(--color-heading)]">Conversations</h1>
-
-    <!-- Loading State -->
-    <div v-if="loading" class="text-center p-12 bg-[var(--color-background-soft)] rounded-lg">
-      <p>Loading conversations...</p>
-    </div>
-
-    <!-- Error State -->
-    <div v-else-if="error" class="text-center p-12 bg-[var(--color-background-soft)] rounded-lg">
-      <p class="text-red-600">Error loading conversations: {{ error.message }}</p>
-      <button 
-        @click="fetchConversations"
-        class="mt-4 px-6 py-2 bg-red-600 text-white border-none rounded cursor-pointer text-base transition-colors hover:bg-red-700"
-      >
-        Retry
-      </button>
-    </div>
-
-    <!-- Empty State -->
-    <div v-else-if="conversations.length === 0" class="text-center p-12 bg-[var(--color-background-soft)] rounded-lg">
-      <p>No conversations found.</p>
-    </div>
-
-    <!-- Conversations List -->
-    <div v-else class="grid gap-6">
-      <div class="p-6 bg-[var(--color-background-soft)] rounded-lg border border-[var(--color-border)]">
-        <!-- <h3>Conversation ID: {{ conversation.id }}</h3> -->
-        <pre class="bg-[var(--color-background-mute)] p-4 rounded overflow-x-auto text-sm">{{ conversations }}</pre>
+  <div class="flex w-[100vw] h-[100vh]">
+    <div class="w-[15%] h-[100%] border-r border-[#f4f4f4]" />
+    <div class="w-[85%] h-[100%]">
+      <div class="flex items-center bg-[#4F4F4F] h-[58px] px-[26px]">
+        <svg xmlns="http://www.w3.org/2000/svg" height="18px" viewBox="0 0 24 24" width="18px" fill="#f2f2f2"><path d="M0 0h24v24H0V0z" fill="none"/>
+          <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+        </svg>
+        <input type="text" class="w-2/3 text-base ml-2 text-[#f2f2f2] bg-transparent border-none outline-none" />
       </div>
+      <!-- Floating Button -->
+      <FloatingButton />
     </div>
-    
-    <!-- Floating Button -->
-    <FloatingButton />
   </div>
 </template>
 

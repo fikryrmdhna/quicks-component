@@ -6,9 +6,6 @@ export function useConversations() {
   const loading = ref(false)
   const error: Ref<Error | null> = ref(null)
 
-  /**
-   * Fetch all conversations from Firestore
-   */
   const fetchConversations = async () => {
     loading.value = true
     error.value = null
