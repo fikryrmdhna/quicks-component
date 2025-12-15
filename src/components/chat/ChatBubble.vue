@@ -35,12 +35,6 @@ defineProps({
 defineEmits(['reply', 'edit', 'delete', 'share', 'toggleMenu'])
 </script>
 
-<script lang="ts">
-export default {
-  name: 'ChatBubble',
-}
-</script>
-
 <template>
   <div :class="message.isUser ? 'flex flex-col items-end' : 'flex flex-col items-start'">
     <p
