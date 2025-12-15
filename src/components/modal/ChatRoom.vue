@@ -1,16 +1,53 @@
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted, nextTick, type PropType } from 'vue'
 import TextInput from '../form/TextInput.vue'
 import ButtonNormal from '../button/ButtonNormal.vue'
 
+interface Message {
+  id: string
+  text: string
+  sender: string
+  timestamp: {
+    seconds: number
+    nanoseconds: number
+  }
+  isOwn?: boolean
+  unread?: boolean
+  replyTo?: string | null
+}
+
+interface ProcessedMessage {
+  id: string
+  originalId: string
+  sender: string
+  text: string
+  time: string
+  isUser: boolean
+  unread?: boolean
+  timestamp: number
+  replyingTo: { sender: string; text: string } | null
+  showDividerBefore?: boolean
+}
+
+interface Chat {
+  id: string
+  type: string
+  title: string
+  participants: string[]
+  messages: Message[]
+  timestamp?: {
+    seconds: number
+  }
+}
+
 const props = defineProps({
   selectedChat: {
-    type: Object,
+    type: Object as PropType<Chat | null>,
     default: null,
   },
 })
 
-const emit = defineEmits(['close', 'back'])
+const emit = defineEmits(['close', 'back', 'reply'])
 
 const newMessage = ref('')
 const chatContainer = ref<HTMLElement | null>(null)
@@ -25,14 +62,14 @@ const chatMessages = computed(() => {
     return []
   }
 
-  const rawMessages = props.selectedChat.messages.map((msg: any, index: number) => ({
+  const rawMessages = props.selectedChat.messages.map((msg: Message, index: number) => ({
     ...msg,
     uniqueId: msg.id ? (msg.id.includes('_') ? msg.id : `${msg.id}_${index}`) : `msg_${index}`,
   }))
 
-  const msgMap = new Map(rawMessages.map((m: any) => [m.uniqueId, m]))
+  const msgMap = new Map(rawMessages.map((m) => [m.uniqueId, m]))
 
-  const messages = rawMessages.map((msg: any) => {
+  const messages = rawMessages.map((msg): ProcessedMessage => {
     const timestamp = msg.timestamp?.seconds ? new Date(msg.timestamp.seconds * 1000) : new Date()
 
     let replyingTo = null
@@ -40,8 +77,8 @@ const chatMessages = computed(() => {
       const parent = msgMap.get(msg.replyTo)
       if (parent) {
         replyingTo = {
-          sender: (parent as any).sender,
-          text: (parent as any).text,
+          sender: parent.sender,
+          text: parent.text,
         }
       }
     }
@@ -67,7 +104,7 @@ const chatMessages = computed(() => {
 
   const firstUnreadIndex = messages.findIndex((msg) => msg.unread)
 
-  if (firstUnreadIndex > 0) {
+  if (firstUnreadIndex > 0 && messages[firstUnreadIndex]) {
     messages[firstUnreadIndex].showDividerBefore = true
   }
 
@@ -103,7 +140,7 @@ const handleShare = (messageId: string) => {
 
 const handleReply = (messageId: string) => {
   console.log('Reply to message:', messageId)
-  const msg = chatMessages.value.find((m: any) => m.id === messageId)
+  const msg = chatMessages.value.find((m) => m.id === messageId)
   if (msg) {
     replyToMessage.value = {
       id: msg.id,
@@ -126,10 +163,13 @@ const participantColors = computed(() => {
     { text: 'text-[#43A26B]', bg: '#D2F2EA' },
   ]
 
-  const colorMap: Record<string, any> = {}
+  const colorMap: Record<string, { text: string; bg: string }> = {}
   props.selectedChat.participants.forEach((participant: string) => {
     const hash = participant.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)
-    colorMap[participant] = colors[hash % colors.length]
+    const color = colors[hash % colors.length]
+    if (color) {
+      colorMap[participant] = color
+    }
   })
 
   return colorMap
@@ -170,9 +210,9 @@ const sendMessage = () => {
 
     console.log('Sending message:', newMsg)
 
-    if (props.selectedChat.messages) {
-      props.selectedChat.messages.push(newMsg)
-    }
+    console.log('Sending message:', newMsg)
+
+    emit('reply', newMsg)
 
     if (props.selectedChat?.type !== 'group') {
       showConnectingBadge.value = true

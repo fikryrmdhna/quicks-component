@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { useConversations } from '@/composables/useConversations'
+import { type Conversation, type Message } from '@/services/conversations'
 import SingleUser from '@/components/user/SingleUser.vue'
 import MultipleUser from '@/components/user/MultipleUser.vue'
 import SearchInput from '../form/SearchInput.vue'
@@ -16,9 +17,9 @@ const props = defineProps({
 const emit = defineEmits(['close'])
 
 const showChatRoom = ref(false)
-const selectedChat = ref(null)
+const selectedChat = ref<Conversation | null>(null)
 
-const { conversations, loading, error, fetchConversations } = useConversations()
+const { conversations, loading, fetchConversations } = useConversations()
 
 watch(
   () => props.isOpen,
@@ -41,7 +42,7 @@ function formatDate(date: number) {
   return `${day}/${month}/${year} ${hour}:${minute}`
 }
 
-const openChatRoom = (item: any) => {
+const openChatRoom = (item: Conversation) => {
   console.log(item)
   selectedChat.value = item
   showChatRoom.value = true
@@ -50,6 +51,14 @@ const openChatRoom = (item: any) => {
 const closeChatRoom = () => {
   showChatRoom.value = false
   selectedChat.value = null
+}
+
+const handleReply = (newMsg: Message) => {
+  if (selectedChat.value) {
+    if (selectedChat.value.messages) {
+      selectedChat.value.messages.push(newMsg)
+    }
+  }
 }
 </script>
 
@@ -103,7 +112,7 @@ const closeChatRoom = () => {
                 <!-- Avatar -->
                 <MultipleUser v-if="conversation.type === 'group'" />
                 <SingleUser v-else>
-                  {{ conversation.participants[0].split('')[0].charAt(0) }}
+                  {{ conversation.participants[0]?.charAt(0) }}
                 </SingleUser>
 
                 <!-- Content -->
@@ -145,9 +154,10 @@ const closeChatRoom = () => {
         <!-- Chat Room View -->
         <ChatRoom
           v-else
-          :selectedChat="selectedChat"
+          :selectedChat="selectedChat as any"
           @close="emit('close')"
           @back="closeChatRoom"
+          @reply="handleReply"
         />
       </Transition>
     </div>
