@@ -1,20 +1,11 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted, nextTick, type PropType } from 'vue'
-import TextInput from '../form/TextInput.vue'
-import ButtonNormal from '../button/ButtonNormal.vue'
-
-interface Message {
-  id: string
-  text: string
-  sender: string
-  timestamp: {
-    seconds: number
-    nanoseconds: number
-  }
-  isOwn?: boolean
-  unread?: boolean
-  replyTo?: string | null
-}
+import ChatHeader from '@/components/chat/ChatHeader.vue'
+import ConnectingBadge from '@/components/chat/ConnectingBadge.vue'
+import MessageInput from '@/components/chat/MessageInput.vue'
+import ChatBubble from '@/components/chat/ChatBubble.vue'
+import NewMessageBadge from '@/components/chat/NewMessageBadge.vue'
+import type { Conversation, Message } from '@/services/conversations'
 
 interface ProcessedMessage {
   id: string
@@ -29,20 +20,9 @@ interface ProcessedMessage {
   showDividerBefore?: boolean
 }
 
-interface Chat {
-  id: string
-  type: string
-  title: string
-  participants: string[]
-  messages: Message[]
-  timestamp?: {
-    seconds: number
-  }
-}
-
 const props = defineProps({
   selectedChat: {
-    type: Object as PropType<Chat | null>,
+    type: Object as PropType<Conversation | null>,
     default: null,
   },
 })
@@ -210,8 +190,6 @@ const sendMessage = () => {
 
     console.log('Sending message:', newMsg)
 
-    console.log('Sending message:', newMsg)
-
     emit('reply', newMsg)
 
     if (props.selectedChat?.type !== 'group') {
@@ -287,43 +265,7 @@ onUnmounted(() => {
 <template>
   <div class="h-full flex flex-col">
     <!-- Header -->
-    <div class="flex items-center justify-between p-4 border-b">
-      <div class="flex items-center gap-3 w-full">
-        <button @click="emit('back')" class="text-[#333333]">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M15 19l-7-7 7-7"
-            />
-          </svg>
-        </button>
-        <div class="w-full">
-          <h2
-            class="text-[#2F80ED] font-bold text-sm"
-            :class="{ 'w-[80%] line-clamp-1': selectedChat?.type === 'group' }"
-          >
-            {{
-              selectedChat?.type === 'group' ? selectedChat?.title : selectedChat?.participants[0]
-            }}
-          </h2>
-          <p v-if="selectedChat?.type === 'group'" class="text-xs text-[#333333]">
-            {{ selectedChat?.participants?.length || 0 }} Participants
-          </p>
-        </div>
-      </div>
-      <button @click="emit('close')" class="text-[#333333]">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M6 18L18 6M6 6l12 12"
-          />
-        </svg>
-      </button>
-    </div>
+    <ChatHeader :selected-chat="selectedChat" @back="emit('back')" @close="emit('close')" />
 
     <!-- Chat Messages -->
     <div ref="chatContainer" class="flex-1 overflow-y-auto p-4 space-y-4">
@@ -364,189 +306,32 @@ onUnmounted(() => {
           <div class="flex-1 h-px bg-[#EB5757]"></div>
         </div>
 
-        <p
-          class="text-sm font-bold"
-          :class="[
-            message.isUser
-              ? getSenderColor(message.sender, true).text
-              : getSenderColor(message.sender, false).text,
-            message.isUser ? 'text-right' : 'text-left',
-          ]"
-        >
-          {{ message.sender }}
-        </p>
-
-        <!-- Message Bubble -->
-        <div :class="message.isUser ? 'flex flex-col items-end' : 'flex flex-col items-start'">
-          <div class="relative group max-w-[70%]">
-            <div
-              v-if="message.replyingTo"
-              class="bg-[#F2F2F2] border border-[#E0E0E0] text-[#4F4F4F] p-3 rounded mb-2"
-            >
-              <p class="text-sm">{{ message.replyingTo.text }}</p>
-            </div>
-          </div>
-          <div class="relative group max-w-[70%]">
-            <!-- Three dots menu -->
-            <button
-              @click.stop="toggleMessageMenu(message.id)"
-              :class="message.isUser ? 'absolute -left-8 top-2' : 'absolute -right-8 top-2'"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="w-5 h-5 text-[#4F4F4F]"
-                viewBox="0 0 24 24"
-                fill="#4f4f4f"
-              >
-                <path d="M0 0h24v24H0V0z" fill="none" />
-                <path
-                  d="M6 10c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm12 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm-6 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"
-                />
-              </svg>
-            </button>
-
-            <!-- Dropdown Menu -->
-            <Transition
-              enter-active-class="transition-all duration-200 ease-out"
-              leave-active-class="transition-all duration-150 ease-in"
-              enter-from-class="opacity-0 scale-95"
-              enter-to-class="opacity-100 scale-100"
-              leave-from-class="opacity-100 scale-100"
-              leave-to-class="opacity-0 scale-95"
-            >
-              <div
-                v-if="activeMessageMenu === message.id"
-                :class="[
-                  'absolute top-8 bg-white border border-[#BDBDBD] rounded-md shadow-lg z-20 py-1 w-32',
-                  message.isUser ? '-left-32' : '-right-8',
-                ]"
-                @click.stop
-              >
-                <template v-if="message.isUser">
-                  <div
-                    @click="handleEdit(message.id)"
-                    class="w-full cursor-pointer border-b border-[#BDBDBD] text-left px-4 py-2 text-sm text-[#2F80ED] hover:bg-gray-100 transition-colors"
-                  >
-                    Edit
-                  </div>
-                  <div
-                    @click="handleDelete(message.id)"
-                    class="w-full cursor-pointer text-left px-4 py-2 text-sm text-[#EB5757] hover:bg-gray-100 transition-colors"
-                  >
-                    Delete
-                  </div>
-                </template>
-                <template v-else>
-                  <div
-                    @click="handleShare(message.id)"
-                    class="w-full cursor-pointer border-b border-[#BDBDBD] text-left px-4 py-2 text-sm text-[#2F80ED] hover:bg-gray-100 transition-colors"
-                  >
-                    Share
-                  </div>
-                  <div
-                    @click="handleReply(message.id)"
-                    class="w-full cursor-pointer text-left px-4 py-2 text-sm text-[#2F80ED] hover:bg-gray-100 transition-colors"
-                  >
-                    Reply
-                  </div>
-                </template>
-              </div>
-            </Transition>
-
-            <div
-              class="rounded-lg p-3"
-              :style="{ backgroundColor: getSenderColor(message.sender, message.isUser).bg }"
-            >
-              <p class="text-sm text-[#4F4F4F]">{{ message.text }}</p>
-              <p class="text-xs text-[#4F4F4F] mt-1">{{ message.time }}</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- New Message Badge (Floating) -->
-      <Transition
-        enter-active-class="transition-all duration-200 ease-out"
-        leave-active-class="transition-all duration-200 ease-in"
-        enter-from-class="opacity-0 translate-y-2"
-        enter-to-class="opacity-100 translate-y-0"
-        leave-from-class="opacity-100 translate-y-0"
-        leave-to-class="opacity-0 translate-y-2"
-      >
-        <button
-          v-if="showNewMessageBadge"
-          @click="scrollToNewMessages"
-          class="absolute flex items-center bottom-20 left-1/2 -translate-x-1/2 px-3 py-2 bg-[#E9F3FF] text-[#2F80ED] text-sm font-bold rounded-[5px] transition-colors"
-        >
-          New Message
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="ml-2"
-            height="18px"
-            viewBox="0 0 24 24"
-            width="18px"
-            fill="#f2f2f2"
-          >
-            <path d="M0 0h24v24H0V0z" fill="none" />
-            <path d="M20 12l-1.41-1.41L13 16.17V4h-2v12.17l-5.58-5.59L4 12l8 8 8-8z" />
-          </svg>
-        </button>
-      </Transition>
-    </div>
-
-    <!-- Connecting Badge -->
-    <Transition
-      enter-active-class="transition-all duration-300 ease-out"
-      leave-active-class="transition-all duration-300 ease-in"
-      enter-from-class="opacity-0 translate-y-4"
-      enter-to-class="opacity-100 translate-y-0"
-      leave-from-class="opacity-100 translate-y-0"
-      leave-to-class="opacity-0 translate-y-4"
-    >
-      <div v-if="showConnectingBadge" class="px-4 pb-2 bg-white">
-        <div class="flex items-center gap-3 bg-[#E9F3FF] p-3 rounded-lg">
-          <div
-            class="w-4 h-4 border-2 border-[#2F80ED] border-t-transparent rounded-full animate-spin"
-          ></div>
-          <p class="text-[#4F4F4F] text-xs font-bold">
-            Please wait while we connect you with one of our team ...
-          </p>
-        </div>
-      </div>
-    </Transition>
-
-    <!-- Message Input -->
-    <div class="p-4 pt-0 border-t-0 flex items-end gap-2">
-      <div class="flex-1 border border-[#E0E0E0] rounded-lg overflow-hidden bg-white">
-        <!-- Reply Preview -->
-        <div v-if="replyToMessage" class="bg-[#F2F2F2] p-3 border-b border-[#E0E0E0] relative">
-          <div class="flex justify-between items-start mb-1">
-            <h3 class="font-bold text-[#4F4F4F] text-sm">
-              Replying to {{ replyToMessage.sender }}
-            </h3>
-            <button @click="cancelReply" class="text-[#4F4F4F] hover:text-[#333]">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
-            </button>
-          </div>
-          <div class="text-sm text-[#4F4F4F]">{{ replyToMessage.text }}</div>
-        </div>
-
-        <TextInput
-          v-model="newMessage"
-          placeholder="Type a new message"
-          class="w-full px-4 py-3 outline-none focus:outline-none bg-transparent"
-          @keyup.enter="sendMessage"
+        <ChatBubble
+          :message="message"
+          :is-group="selectedChat?.type === 'group'"
+          :sender-color="getSenderColor(message.sender, message.isUser)"
+          :is-open="activeMessageMenu === message.id"
+          @toggle-menu="toggleMessageMenu(message.id)"
+          @reply="handleReply(message.id)"
+          @edit="handleEdit(message.id)"
+          @delete="handleDelete(message.id)"
+          @share="handleShare(message.id)"
         />
       </div>
 
-      <ButtonNormal @click="sendMessage" class="mb-[1px]"> Send </ButtonNormal>
+      <!-- New Message Badge (Floating) -->
+      <NewMessageBadge :show="showNewMessageBadge" @click="scrollToNewMessages" />
     </div>
+
+    <!-- Connecting Badge -->
+    <ConnectingBadge :show="showConnectingBadge" />
+
+    <!-- Message Input -->
+    <MessageInput
+      v-model="newMessage"
+      :reply-to-message="replyToMessage"
+      @send="sendMessage"
+      @cancel-reply="cancelReply"
+    />
   </div>
 </template>
